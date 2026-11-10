@@ -9,7 +9,7 @@
 
     const ranked = data.projects.map(project => {
       const contributions = chosen.map(({q, option}) => ({
-        questionId: q.id, answer: option.text, raw: option.scores[project.id],
+        questionId: q.id, optionId: option.id, answer: option.text, raw: option.scores[project.id],
         points: option.scores[project.id] * q.weight, core: q.weight === 2
       }));
       return {
@@ -145,10 +145,18 @@
     if (next) next.onclick = advance;
   }
 
-  function evidenceFor(project) {
-    return project.contributions.filter(c => c.raw >= 3)
+  function renderEvidence(project, limit) {
+    const evidence = project.contributions.filter(c => c.raw >= 3)
+      .map(c => ({...c, explanation: project.reasons?.[c.questionId + c.optionId]}))
+      .filter(c => c.explanation)
       .sort((a, b) => b.points - a.points || b.raw - a.raw || a.questionId.localeCompare(b.questionId))
-      .slice(0, 2);
+      .filter((c, index, all) => all.findIndex(other => other.explanation === c.explanation) === index)
+      .slice(0, limit);
+    if (!evidence.length) return '';
+    return `<ul class="evidence-list">${evidence.map(c => `<li>
+      <strong class="evidence-answer">${esc(c.answer)}</strong>
+      <p class="evidence-explanation">${esc(c.explanation)}</p>
+    </li>`).join('')}</ul>`;
   }
 
   function projectTitle(p) {
@@ -172,12 +180,10 @@
     const [primary, alternate] = result.ranked;
     const {character} = primary;
     const role = data.roles[result.role];
-    const evidence = evidenceFor(primary);
-    const alternateEvidence = evidenceFor(alternate)[0];
     const {noticeUrl, previewUrl, schedule} = data.recruitment;
     const official = isLink(noticeUrl);
     const recruitmentLink = linkButton(official ? noticeUrl : previewUrl,
-      official ? 'KOICA 모집 공고 보기' : 'KOICA 모집 사전 안내 보기', 'primary');
+      'KOICA 모집 안내 보기', 'primary');
     const mentoringLink = linkButton(data.mentoringUrl, '비밀과외 신청', 'secondary')
       || '<button class="button secondary unavailable" disabled>비밀과외 신청 · 준비 중</button>';
 
@@ -193,8 +199,7 @@
       </header>
       <section class="result-section">
         <h2>왜 이 프로젝트가 나왔을까요?</h2>
-        ${evidence.length ? `<ul class="evidence-list">${evidence.map(c => `<li>${esc(c.answer)}</li>`).join('')}</ul>`
-          : `<p>${esc(primary.summary)}</p>`}
+        ${renderEvidence(primary, 2) || `<p>${esc(primary.summary)}</p>`}
       </section>
       <section class="result-section">
         <h2>10기 프로젝트 알아보기</h2>
@@ -208,13 +213,14 @@
         <h3 class="project-name"><span aria-hidden="true">${esc(alternate.flag)}</span> ${esc(projectTitle(alternate))}</h3>
         <p>${esc(alternate.summary)}</p>
         <details><summary>추천 이유와 모집 분야 보기</summary>
-          ${alternateEvidence ? `<p>연결되는 답변 · ${esc(alternateEvidence.answer)}</p>` : ''}
+          ${renderEvidence(alternate, 1) || '<p>전체 답변을 바탕으로 함께 살펴볼 프로젝트예요.</p>'}
           <div class="skill-tags">${alternate.roles.map(r => `<span>${esc(r)}</span>`).join('')}</div>
         </details>
       </section>
       <section class="result-section">
-        <h2>선배들은 어떤 활동을 했을까?</h2>
-        <p class="mentor-question"><strong>예상 질문</strong><br>${esc(mentorQuestionFor(primary))}</p>
+        <h2>이런 점이 궁금하다면?</h2>
+        <p class="mentor-question">“${esc(mentorQuestionFor(primary))}”</p>
+        <p class="mentor-invite">비밀과외에서 선배에게 물어보세요.</p>
         <div class="follow-up">${mentoringLink}${recruitmentLink}</div>
       </section>
       <div class="result-actions">

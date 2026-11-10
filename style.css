@@ -56,7 +56,10 @@
 .result-section .project-name { font-size: 16px; margin: 12px 0 6px; }
 .result-section p { font-size: 14px; margin: 8px 0; }
 .evidence-list { padding-left: 1.3em; margin-bottom: 0; font-size: 14px; }
-.evidence-list li + li { margin-top: 6px; }
+.evidence-list li + li { margin-top: 10px; }
+.evidence-answer { font-weight: 700; }
+.result-section .evidence-explanation { color: var(--muted); margin: 3px 0 0; }
+.result-section .mentor-invite { color: var(--muted); }
 .skill-tags { margin: 12px 0 0; }
 .skill-tags > span { background: var(--paper); font-size: 12px; }
 .result-section .recruitment-note { color: var(--muted); font-size: 13px; }
